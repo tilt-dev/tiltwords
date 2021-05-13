@@ -1,4 +1,4 @@
 *.puz
-__pycache__/*
+**/__pycache__/*
 dist/*
 build/*
