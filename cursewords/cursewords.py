@@ -13,7 +13,7 @@ import puz
 from blessed import Terminal
 
 import chars
-from tilt_checker import TiltChecker
+from tilt.tilt_checker import TiltChecker
 
 
 class Cell:
