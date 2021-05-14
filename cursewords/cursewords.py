@@ -785,6 +785,7 @@ def main():
                                term.clear_eol]))
 
         puzzle_paused = True
+
     def unpause():
         timer.unpause()
         grid.fill()
@@ -792,8 +793,15 @@ def main():
 
         puzzle_paused = False
 
+    manually_paused = False
     with term.raw(), term.hidden_cursor():
         while not to_quit:
+            if tc.any_red:
+                pause("go fix your build!")
+            else:
+                if not manually_paused:
+                    unpause()
+
             # First up we draw all the necessary stuff. If the current word
             # is different from the word the last time through the loop:
             if cursor.current_word() is not old_word:
@@ -860,12 +868,6 @@ def main():
             old_position = cursor.position
             old_word = cursor.current_word()
 
-            # testing tilt checker situation
-            if tc.is_div5():
-                pause("✨ a 5 second ✨")
-            # else:
-            #     print("nothing exciting here 🐙")
-
             # ctrl-q
             if keypress == chr(17):
                 to_quit = grid.confirm_quit(modified_since_save)
@@ -881,12 +883,14 @@ def main():
             # ctrl-p
             elif keypress == chr(16) and not puzzle_complete:
                 if timer.is_running:
+                    manually_paused = True
                     pause('PUZZLE PAUSED')
 
                 else:
-                    if tc.is_div5():
-                        pause('SORRY BUD')
+                    if tc.any_red:
+                        pause('no seriously go fix your build')
                     else:
+                        manually_paused = False
                         unpause()
 
             # ctrl-z

@@ -52,8 +52,6 @@ class TiltChecker(threading.Thread):
         try:
             session = self.cli.read_session("Tiltfile")
             # no error = tilt is running
-            pprint(session)
-            print(type(session))
             self.any_red = _any_targets_red(session)
         except ApiException as e:
             print("Exception when getting Tilt session: Tiltfile")
@@ -66,9 +64,3 @@ class TiltChecker(threading.Thread):
                 time.sleep(self.sleep_secs)
         finally:
             self.cli.api_client.close()  # is there a slicker way to do this teardown automatically?
-
-
-if __name__ == "__main__":
-    tc = TiltChecker()
-    tc.check_any_red()
-    print('any red? -->', tc.any_red)
