@@ -12,7 +12,8 @@ import puz
 
 from blessed import Terminal
 
-from . import chars
+import chars
+from tilt_checker import TiltChecker
 
 
 class Cell:
@@ -769,7 +770,27 @@ def main():
                   is_running=True, active=bool(int(grid.timer_active)))
     timer.start()
 
+    tc = TiltChecker()
+    tc.start()
+
     info_location = {'x': grid_x, 'y': grid_y + 2 * grid.row_count + 2}
+
+    def pause(msg):
+        timer.pause()
+        grid.draw()
+
+        with term.location(**info_location):
+            print('\r\n'.join([msg + term.clear_eol,
+                               term.clear_eol,
+                               term.clear_eol]))
+
+        puzzle_paused = True
+    def unpause():
+        timer.unpause()
+        grid.fill()
+        old_word = []
+
+        puzzle_paused = False
 
     with term.raw(), term.hidden_cursor():
         while not to_quit:
@@ -802,7 +823,7 @@ def main():
                 wrapped_clue = [line + term.clear_eol for line in wrapped_clue]
 
                 # This is fun: since we're in raw mode, \n isn't sufficient to
-                # return the printing location to the first column. If you 
+                # return the printing location to the first column. If you
                 # don't also have \r,
                 # it
                 #    prints
@@ -839,6 +860,12 @@ def main():
             old_position = cursor.position
             old_word = cursor.current_word()
 
+            # testing tilt checker situation
+            if tc.is_div5():
+                pause("✨ a 5 second ✨")
+            # else:
+            #     print("nothing exciting here 🐙")
+
             # ctrl-q
             if keypress == chr(17):
                 to_quit = grid.confirm_quit(modified_since_save)
@@ -854,22 +881,13 @@ def main():
             # ctrl-p
             elif keypress == chr(16) and not puzzle_complete:
                 if timer.is_running:
-                    timer.pause()
-                    grid.draw()
-
-                    with term.location(**info_location):
-                        print('\r\n'.join(['PUZZLE PAUSED' + term.clear_eol,
-                                           term.clear_eol,
-                                           term.clear_eol]))
-
-                    puzzle_paused = True
+                    pause('PUZZLE PAUSED')
 
                 else:
-                    timer.unpause()
-                    grid.fill()
-                    old_word = []
-
-                    puzzle_paused = False
+                    if tc.is_div5():
+                        pause('SORRY BUD')
+                    else:
+                        unpause()
 
             # ctrl-z
             elif keypress == chr(26):
