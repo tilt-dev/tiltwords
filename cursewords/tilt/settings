@@ -7,7 +7,7 @@ export GEN_COMMIT=d71ff1efd
 export CLIENT_VERSION="0.1"
 
 # Name of the release package
-export PACKAGE_NAME="tilt-dev/python-client"
+export PACKAGE_NAME="tilt_dev.python_client"
 
 export OPENAPI_GENERATOR_COMMIT=v4.2.3
 
