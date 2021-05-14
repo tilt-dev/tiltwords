@@ -11,41 +11,32 @@ from kubernetes import config
 TILT_API_CONFIG_PATH = "/Users/maia/.windmill/config"
 TILT_API_CONTEXT = "tilt-default"
 
+# type alias
+Session = clientlib.models.v1alpha1_session.V1alpha1Session
+Target = clientlib.models.v1alpha1_target.V1alpha1Target
+
+
+def _any_targets_red(session: Session) -> bool:
+    return any([_target_is_red(target) for target in session.status.targets])
+
+
+def _target_is_red(target: Target) -> bool:
+    return target.state.terminated and target.state.terminated.error
+
 
 class TiltChecker(threading.Thread):
-    def __init__(self, starting_seconds=0, is_running=True, active=True):
-        self.starting_seconds = starting_seconds
-        self.is_running = is_running
-        self.active = active
+    def __init__(self, sleep_secs=0.5, debug=False):
+        self.any_red = False
+        self.sleep_secs = sleep_secs
+        self.debug = debug
 
-        self.start_time = None
-        self.time_passed = None
+        # TODO: error handling
+        cfg = clientlib.Configuration()
+        config.load_kube_config(TILT_API_CONFIG_PATH, TILT_API_CONTEXT,
+                                client_configuration=cfg)
 
-        super().__init__(daemon=True)
-
-    def run(self):
-        self.start_time = time.time()
-        self.time_passed = self.starting_seconds
-
-        while self.active:
-            if self.is_running:
-                self.time_passed = (self.starting_seconds
-                                    + int(time.time() - self.start_time))
-
-            time.sleep(0.5)
-
-    def is_div5(self):
-        _, seconds = divmod(self.time_passed, 60)
-        return seconds % 5 == 0
-
-
-if __name__ == "__main__":
-    cfg = clientlib.Configuration()
-
-    config.load_kube_config(TILT_API_CONFIG_PATH, TILT_API_CONTEXT,
-                            client_configuration=cfg)
-
-    with clientlib.ApiClient(cfg) as api_client:
+        # TODO: client should be initialized in a `with` so cleanup happens automatically
+        api_client = clientlib.ApiClient(cfg)
         api_instance = clientlib.TiltDevV1alpha1Api(api_client)
 
         # Bearer Auth doesn't work right with Python codegen, sigh, so just add auth
@@ -53,8 +44,31 @@ if __name__ == "__main__":
         # https://github.com/OpenAPITools/openapi-generator/issues/8865
         api_instance.api_client.default_headers['Authorization'] = cfg.get_api_key_with_prefix('authorization')
 
+        self.cli = api_instance
+
+        super().__init__(daemon=True)
+
+    def check_any_red(self):
         try:
-            api_response = api_instance.list_session()
-            pprint(api_response)
+            session = self.cli.read_session("Tiltfile")
+            # no error = tilt is running
+            pprint(session)
+            print(type(session))
+            self.any_red = _any_targets_red(session)
         except ApiException as e:
-            print("Exception when calling TiltDevV1alpha1Api->list_session: %s\n" % e)
+            print("Exception when getting Tilt session: Tiltfile")
+            raise e
+
+    def run(self):
+        try:
+            while True:
+                self.check_any_red()
+                time.sleep(self.sleep_secs)
+        finally:
+            self.cli.api_client.close()  # is there a slicker way to do this teardown automatically?
+
+
+if __name__ == "__main__":
+    tc = TiltChecker()
+    tc.check_any_red()
+    print('any red? -->', tc.any_red)
