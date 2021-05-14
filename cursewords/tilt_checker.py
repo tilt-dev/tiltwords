@@ -1,6 +1,7 @@
 import threading
 import time
 
+from tilt_dev.python_client.api_client import ApiClient
 
 class TiltChecker(threading.Thread):
     def __init__(self, starting_seconds=0, is_running=True, active=True):
@@ -27,3 +28,9 @@ class TiltChecker(threading.Thread):
     def is_div5(self):
         _, seconds = divmod(self.time_passed, 60)
         return seconds % 5 == 0
+
+
+if __name__ == "__main__":
+    print('hello worldddd')
+    cli = ApiClient()
+    cli.rest_client

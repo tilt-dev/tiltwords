@@ -1,0 +1,20 @@
+#!/bin/bash
+
+export GEN_COMMIT=d71ff1efd
+
+# client version for packaging and releasing. It can
+# be different than SPEC_VERSION.
+export CLIENT_VERSION="0.1"
+
+# Name of the release package
+export PACKAGE_NAME="tilt-dev/python-client"
+
+export OPENAPI_GENERATOR_COMMIT=v4.2.3
+
+export OPENAPI_SKIP_FETCH_SPEC=true
+
+# GitHub username/organization to clone kubernetes repo from.
+export USERNAME=garbage
+
+# Kubernetes branch/tag to get the OpenAPI spec from.
+export KUBERNETES_BRANCH="garbage"
