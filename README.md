@@ -1,36 +1,12 @@
-# cursewords
+# tiltwords
 
-`cursewords` is a "graphical" command line program for solving crossword puzzles in the terminal. It can be used to open files saved in the widely used AcrossLite `.puz` format.
+Hook your Tilt instance into [Cursewords](https://github.com/thisisparker/cursewords) by Parker Higgins: solve crossword puzzles on your terminal, but only when none of your builds are red!
 
-<img src="https://raw.githubusercontent.com/thisisparker/cursewords/master/demo.gif" width=450px>
-
-`cursewords` includes nearly every major feature you might expect in a crossword program, including:
-
-* intuitive navigation
-* answer-checking for squares, words, and full puzzles
-* a pausable puzzle timer
-* a puzzle completeness notification
-
-It is currently under active development, and should not be considered fully "released." That said, it is stable and suitable for everyday use.
-
-## Installation
-
-`cursewords` is only compatible with `python3`, and can be installed through `pip`. If you don't know what that means, the best command is probably:
-
-```bash
-pip3 install --user cursewords
-```
-
-You should then be ready to go. You can then use  `cursewords` to open `.puz` files directly:
-
-```
-cursewords todaysnyt.puz
-```
-
-## Usage
-
-If you've used a program to solve crossword puzzles, navigation should be pretty intuitive. `tab` and `shift+tab` are the workhorses for navigation between blanks. `page up` and `page down` (on Mac, `Fn+` up/down arrow keys) jump between words without considering blank spaces. `ctrl+g`, followed by a number, will jump directly to the space with that number.
-
-If you need some help, `ctrl+c` will check the current square, word, or entire puzzle for errors, and `ctrl+r` will reveal answers (subject to the same scoping options). To clear all entries on the puzzle, use `ctrl+x`, and to reset the puzzle to its original state (resetting the timer and removing any stored information about hints and corrections, use `ctrl+z`.
-
-To open a puzzle in `downs-only` mode, where only the down clues are visible, use the `--downs-only` flag when opening the file on the command line.
+## How to use
+1. pull this repo down
+2. `pip install -r requirements.txt`
+3. maybe you need to `cd cursewords/tilt/gen; pip install -e .`? Unclear.
+4. in `cursewords/tilt/tilt_checker.py`, make sure `TILT_API_CONFIG_PATH` points to your Tilt API config (will live at `~/.windmill/config` or `~/.tilt/config`)
+5. in another window, start Tilt
+6. invoke Tiltwords with: `python cursewords/__main__.py test.puz` (or a `.puz` file of your choice)
+7. enjoy this additional motivation to fix your builds! 

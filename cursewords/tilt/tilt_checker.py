@@ -8,7 +8,7 @@ from pprint import pprint
 from kubernetes import config
 
 # TODO: get the dir correctly
-TILT_API_CONFIG_PATH = "/Users/maia/.windmill/config"
+TILT_API_CONFIG_PATH = "~/.windmill/config"
 TILT_API_CONTEXT = "tilt-default"
 
 # type alias
