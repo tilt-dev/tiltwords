@@ -16,6 +16,6 @@ requests-oauthlib==1.3.0
 rsa==4.7.2
 six==1.16.0
 -e git+https://github.com/thisisparker/cursewords.git@0ca4e28ca429a4fdaaeca8ffb3903140497dc925#egg=tilt_dev_python_client&subdirectory=cursewords/tilt/gen
-urllib3==1.26.4
+urllib3==1.26.5
 wcwidth==0.2.5
 websocket-client==0.59.0
