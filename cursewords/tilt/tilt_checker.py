@@ -4,7 +4,6 @@ import threading
 import time
 import tilt_dev.python_client as clientlib
 from tilt_dev.python_client.exceptions import ApiException
-from pprint import pprint
 from kubernetes import config
 
 # TODO: get the dir correctly
