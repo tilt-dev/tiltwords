@@ -626,7 +626,6 @@ class Timer(threading.Thread):
         self.start_time = time.time()
         self.is_running = True
 
-
 def main():
     version_dir = os.path.abspath(os.path.dirname((__file__)))
     version_file = os.path.join(version_dir, 'version')
@@ -793,11 +792,46 @@ def main():
 
         puzzle_paused = False
 
+    def handle_important_keypress(keypress, modified_since_save, manually_paused):
+        to_quit = False
+        # ctrl-q
+        if keypress == chr(17):
+            to_quit = grid.confirm_quit(modified_since_save)
+            if not to_quit:
+                grid.send_notification("Quit command canceled.")
+
+        # ctrl-s
+        elif keypress == chr(19):
+            grid.puzfile.extensions[puz.Extensions.Timer] = timer.save_format()
+            grid.save(filename)
+            modified_since_save = False
+
+        # ctrl-p
+        elif keypress == chr(16) and not puzzle_complete:
+            if timer.is_running:
+                manually_paused = True
+                pause('PUZZLE PAUSED')
+
+            else:
+                if not tc.can_play():
+                    pause('Tilt is waiting for you, go do your work!')
+                else:
+                    manually_paused = False
+                    unpause()
+        return to_quit, modified_since_save, manually_paused
+
     manually_paused = False
     with term.raw(), term.hidden_cursor():
         while not to_quit:
+            # Where (some of) the magic happens: get key input
+            # (the keys that need to work regardless of auto-pause -- e.g. quit -- are
+            #   handled here, the rest below.)
+            keypress = term.inkey()
+            to_quit, modified_since_save, manually_paused = handle_important_keypress(keypress, modified_since_save, manually_paused)
+
             if not tc.can_play():
-                pause("go fix your build!")
+                pause("go do your work!")
+                continue
             else:
                 if not manually_paused:
                     unpause()
@@ -862,39 +896,15 @@ def main():
             blank_cells_remaining = any(grid.cells.get(pos).is_blankish()
                                         for pos in grid.cells)
 
-            # Where the magic happens: get key input
-            keypress = term.inkey()
 
             old_position = cursor.position
             old_word = cursor.current_word()
 
-            # ctrl-q
-            if keypress == chr(17):
-                to_quit = grid.confirm_quit(modified_since_save)
-                if not to_quit:
-                    grid.send_notification("Quit command canceled.")
-
-            # ctrl-s
-            elif keypress == chr(19):
-                grid.puzfile.extensions[puz.Extensions.Timer] = timer.save_format()
-                grid.save(filename)
-                modified_since_save = False
-
-            # ctrl-p
-            elif keypress == chr(16) and not puzzle_complete:
-                if timer.is_running:
-                    manually_paused = True
-                    pause('PUZZLE PAUSED')
-
-                else:
-                    if not tc.can_play():
-                        pause('no seriously go fix your build')
-                    else:
-                        manually_paused = False
-                        unpause()
+            # handling all keyboard input not already handled above
+            # i.e. keypresses that are irrelevant if the game is force-paused
 
             # ctrl-z
-            elif keypress == chr(26):
+            if keypress == chr(26):
                 confirm = grid.confirm_reset()
                 if confirm:
                     grid.send_notification("Puzzle reset.")
