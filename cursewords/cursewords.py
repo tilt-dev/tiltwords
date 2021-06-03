@@ -796,7 +796,7 @@ def main():
     manually_paused = False
     with term.raw(), term.hidden_cursor():
         while not to_quit:
-            if tc.any_red:
+            if not tc.can_play():
                 pause("go fix your build!")
             else:
                 if not manually_paused:
@@ -887,7 +887,7 @@ def main():
                     pause('PUZZLE PAUSED')
 
                 else:
-                    if tc.any_red:
+                    if not tc.can_play():
                         pause('no seriously go fix your build')
                     else:
                         manually_paused = False

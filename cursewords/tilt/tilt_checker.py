@@ -24,9 +24,33 @@ def _target_is_red(target: Target) -> bool:
     return target.state.terminated and target.state.terminated.error
 
 
+def _any_targets_in_progress(session: Session) -> bool:
+    return any([_target_is_in_progress(target) for target in session.status.targets])
+
+
+def _target_is_in_progress(target: Target) -> bool:
+    state = target.state
+    if not (state.waiting or state.active or state.terminated):
+        # target has not been requested to run (e.g. auto_init = false)
+        return False
+
+    if target.type == "server":
+        # case 1: server -- check if it's ready
+        return state.active and not state.active.ready
+    elif target.type == "job":
+        # case 2: job -- check if it has finished running
+        return not state.terminated
+    else:
+        raise Exception("Unrecognized target type for target {}: {}".format(
+            target.name, target.type
+        ))
+
+
 class TiltChecker(threading.Thread):
     def __init__(self, sleep_secs=0.5, debug=False):
         self.any_red = False
+        self.any_in_progress = True
+
         self.sleep_secs = sleep_secs
         self.debug = debug
 
@@ -48,19 +72,25 @@ class TiltChecker(threading.Thread):
 
         super().__init__(daemon=True)
 
-    def check_any_red(self):
-        try:
-            session = self.cli.read_session("Tiltfile")
-            # no error = tilt is running
-            self.any_red = _any_targets_red(session)
-        except ApiException as e:
-            print("Exception when getting Tilt session: Tiltfile")
-            raise e
+    def can_play(self):
+        # Go play your crossword puzzle if:
+        # - at least one resource is still in progress (i.e. running a build/update)
+        # - no resources are red
+        return not self.any_red and self.any_in_progress
 
     def run(self):
         try:
             while True:
-                self.check_any_red()
-                time.sleep(self.sleep_secs)
+                try:
+                    session = self.cli.read_session("Tiltfile")
+                    # no error = tilt is running
+
+                    self.any_red = _any_targets_red(session)
+                    self.any_in_progress = _any_targets_in_progress(session)
+                    time.sleep(self.sleep_secs)
+                except ApiException as e:
+                    print("Exception when getting Tilt session: Tiltfile")
+                    raise e
+
         finally:
             self.cli.api_client.close()  # is there a slicker way to do this teardown automatically?
