@@ -761,6 +761,7 @@ def main():
     old_word = []
     old_position = start_pos
     keypress = ''
+    global puzzle_paused  # i know this is bad but I want to be able to access this from inside different functions
     puzzle_paused = False
     puzzle_complete = False
     modified_since_save = False
@@ -784,6 +785,7 @@ def main():
                                term.clear_eol,
                                term.clear_eol]))
 
+        global puzzle_paused
         puzzle_paused = True
 
     def unpause():
@@ -791,17 +793,12 @@ def main():
         grid.fill()
         old_word = []
 
+        global puzzle_paused
         puzzle_paused = False
 
     manually_paused = False
     with term.raw(), term.hidden_cursor():
         while not to_quit:
-            if not tc.can_play():
-                pause("go fix your build!")
-            else:
-                if not manually_paused:
-                    unpause()
-
             # First up we draw all the necessary stuff. If the current word
             # is different from the word the last time through the loop:
             if cursor.current_word() is not old_word:
@@ -862,6 +859,14 @@ def main():
             blank_cells_remaining = any(grid.cells.get(pos).is_blankish()
                                         for pos in grid.cells)
 
+            # See if we should force-pause (or automatically un-pause)
+            # due to Tilt state
+            if not tc.can_play():
+                pause("go do your work!")
+            else:
+                if puzzle_paused and not manually_paused:
+                    unpause()
+
             # Where the magic happens: get key input
             keypress = term.inkey()
 
@@ -883,15 +888,12 @@ def main():
             # ctrl-p
             elif keypress == chr(16) and not puzzle_complete:
                 if timer.is_running:
-                    manually_paused = True
                     pause('PUZZLE PAUSED')
+                    manually_paused = True
 
-                else:
-                    if not tc.can_play():
-                        pause('no seriously go fix your build')
-                    else:
-                        manually_paused = False
-                        unpause()
+                elif tc.can_play() and manually_paused:
+                    unpause()
+                    manually_paused = False
 
             # ctrl-z
             elif keypress == chr(26):
@@ -913,6 +915,7 @@ def main():
                         old_word = []
                 else:
                     grid.send_notification("Reset command canceled.")
+
 
             # If the puzzle is paused, skip all the rest of the logic
             elif puzzle_paused:
