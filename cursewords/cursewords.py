@@ -7,14 +7,40 @@ import sys
 import time
 import textwrap
 import threading
+import subprocess
 
 import puz
 
 from blessed import Terminal
 
 import chars
-from tilt.tilt_checker import TiltChecker
+from tilt.status_checker import StatusChecker
 
+def revolutionizeoutsidethebox(term):
+    honk = ("\r\n"
+    "            ████████                            \n\r"
+    "        ████        ████                        \n\r"
+    "      ██                ██                      \n\r"
+    "    ██            ██    ██                      \n\r"
+    "  ██░░          ░░░░▒▒▒▒██                      \n\r"
+    "  ▓▓        ░░░░░░░░▒▒▓▓████                    \n\r"
+    "  ██      ░░░░████████▒▒░░░░██                  \n\r"
+    "  ██      ░░██        ████▒▒░░██                \n\r"
+    "  ██      ██              ▓▓████   ████░        \n\r"
+    "  ██░░    ██                          ████░     \n\r"
+    "  ██░░    ██                     ██▒     ████░  \n\r"
+    "  ██░░    ██                       ██▒      ████\n\r"
+    "  ██░░    ██                 ██▒     ██▒        \n\r"
+    "  ▓▓░░░░    ██                ██▒      ██▒      \n\r"
+    "    ▓▓░░    ██                 ██▒       ██▒    \n\r"
+    "    ██░░    ██                  ██▒        ██▒     ╔═══════╗\n\r"
+    "    ██░░░░  ░░██                 ██▒               ║ BREAK ║\n\r"
+    "      ██░░      ██                ██▒              ║ OVER! ║\n\r"
+    "      ██░░      ██                                 ╚═══════╝\n\r"
+    )
+    output = subprocess.check_output(["play", "honk1.wav"])
+    print(term.clear())
+    print(honk)
 
 class Cell:
     def __init__(self, solution, entry=None):
@@ -698,62 +724,57 @@ def main():
     print(term.enter_fullscreen())
     print(term.clear())
 
-    grid.draw()
-    grid.number()
-    grid.fill()
-
-    software_info = 'cursewords v{}'.format(version)
-    puzzle_info = '{grid.title} - {grid.author}'.format(grid=grid)
-    padding = 2
-    sw_width = len(software_info) + 5
-    pz_width = term.width - sw_width - padding
-    if len(puzzle_info) > pz_width:
-        puzzle_info = "{}…".format(puzzle_info[:pz_width - 1])
-
-    headline = " {:<{pz_w}}{:>{sw_w}} ".format(
-            puzzle_info, software_info,
-            pz_w=pz_width, sw_w=sw_width)
-
-    with term.location(x=0, y=0):
-        print(term.dim(term.reverse(headline)))
-
-    toolbar = ''
-    commands = [("^Q", "quit"),
-                ("^S", "save"),
-                ("^P", "pause"),
-                ("^C", "check"),
-                ("^R", "reveal"),
-                ("^G", "go to"),
-                ("^X", "clear"),
-                ("^Z", "reset"),]
-
-    if term.width >= 15 * len(commands):
-        for shortcut, action in commands:
-            shortcut = term.reverse(shortcut)
-            toolbar += "{:<25}".format(' '.join([shortcut, action]))
-
-        with term.location(x=grid_x, y=term.height):
-            print(toolbar, end='')
-    else:
-        grid.notification_area = (grid.notification_area[0] - 1, grid_x)
-        command_split = int(len(commands)/2) - 1
-        for idx, (shortcut, action) in enumerate(commands):
-            shortcut = term.reverse(shortcut)
-            toolbar += "{:<25}".format(' '.join([shortcut, action]))
-
-            if idx == command_split:
-                toolbar += '\n' + grid_x * ' '
-
-        with term.location(x=grid_x, y=term.height - 2):
-            print(toolbar, end='')
+    def draw_all():
+        print(term.clear())
+        grid.draw()
+        grid.number()
+        grid.fill()
+        software_info = 'cursewords v{}'.format(version)
+        puzzle_info = '{grid.title} - {grid.author}'.format(grid=grid)
+        padding = 2
+        sw_width = len(software_info) + 5
+        pz_width = term.width - sw_width - padding
+        if len(puzzle_info) > pz_width:
+            puzzle_info = "{}…".format(puzzle_info[:pz_width - 1])
+        headline = " {:<{pz_w}}{:>{sw_w}} ".format(
+                puzzle_info, software_info,
+                pz_w=pz_width, sw_w=sw_width)
+        with term.location(x=0, y=0):
+            print(term.dim(term.reverse(headline)))
+        toolbar = ''
+        commands = [("^Q", "quit"),
+                    ("^S", "save"),
+                    ("^P", "pause"),
+                    ("^C", "check"),
+                    ("^R", "reveal"),
+                    ("^G", "go to"),
+                    ("^X", "clear"),
+                    ("^Z", "reset"),]
+        if term.width >= 15 * len(commands):
+            for shortcut, action in commands:
+                shortcut = term.reverse(shortcut)
+                toolbar += "{:<25}".format(' '.join([shortcut, action]))
+            with term.location(x=grid_x, y=term.height):
+                print(toolbar, end='')
+        else:
+            grid.notification_area = (grid.notification_area[0] - 1, grid_x)
+            command_split = int(len(commands)/2) - 1
+            for idx, (shortcut, action) in enumerate(commands):
+                shortcut = term.reverse(shortcut)
+                toolbar += "{:<25}".format(' '.join([shortcut, action]))
+                if idx == command_split:
+                    toolbar += '\n' + grid_x * ' '
+            with term.location(x=grid_x, y=term.height - 2):
+                print(toolbar, end='')
 
     clue_width = min(int(1.3 * (puzzle_width) - grid_x),
-                     term.width - 2 - grid_x)
-
+                    term.width - 2 - grid_x)
     clue_wrapper = textwrap.TextWrapper(
             width=clue_width,
             max_lines=3,
             subsequent_indent=grid_x * ' ')
+
+    draw_all()
 
     start_pos = grid.across_words[0][0]
     cursor = Cursor(start_pos, "across", grid)
@@ -771,32 +792,35 @@ def main():
                   is_running=True, active=bool(int(grid.timer_active)))
     timer.start()
 
-    tc = TiltChecker()
-    tc.start()
+    sc = StatusChecker()
+    sc.start()
+    manually_paused = False
+
 
     info_location = {'x': grid_x, 'y': grid_y + 2 * grid.row_count + 2}
 
     def pause(msg):
         timer.pause()
-        grid.draw()
-
-        with term.location(**info_location):
-            print('\r\n'.join([msg + term.clear_eol,
-                               term.clear_eol,
-                               term.clear_eol]))
-
+        if not manually_paused:
+            revolutionizeoutsidethebox(term)
+        else:
+            grid.draw()
+            with term.location(**info_location):
+                print('\r\n'.join([msg + term.clear_eol, term.clear_eol, term.clear_eol]))
+                print("\r\n")
+                print(manually_paused)
         global puzzle_paused
         puzzle_paused = True
 
     def unpause():
         timer.unpause()
-        grid.fill()
+        print(term.clear())
+        draw_all()
         old_word = []
-
         global puzzle_paused
         puzzle_paused = False
+        print(term.move(info_location['y'], info_location['x']))
 
-    manually_paused = False
     with term.raw(), term.hidden_cursor():
         while not to_quit:
             # First up we draw all the necessary stuff. If the current word
@@ -859,9 +883,7 @@ def main():
             blank_cells_remaining = any(grid.cells.get(pos).is_blankish()
                                         for pos in grid.cells)
 
-            # See if we should force-pause (or automatically un-pause)
-            # due to Tilt state
-            if not tc.can_play():
+            if not sc.can_play():
                 pause("go do your work!")
             else:
                 if puzzle_paused and not manually_paused:
@@ -888,10 +910,10 @@ def main():
             # ctrl-p
             elif keypress == chr(16) and not puzzle_complete:
                 if timer.is_running:
-                    pause('PUZZLE PAUSED')
                     manually_paused = True
-
-                elif tc.can_play() and manually_paused:
+                    pause('PUZZLE PAUSED')
+                elif sc.can_play() and manually_paused:
+                # else: # THIS
                     unpause()
                     manually_paused = False
 
