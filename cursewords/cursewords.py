@@ -3,6 +3,7 @@
 import argparse
 import itertools
 import os
+import platform
 import sys
 import time
 import textwrap
@@ -38,7 +39,9 @@ def revolutionizeoutsidethebox(term):
     "      ██░░      ██                ██▒              ║ OVER! ║\n\r"
     "      ██░░      ██                                 ╚═══════╝\n\r"
     )
-    output = subprocess.check_output(["play", "honk1.wav"])
+    # sorry windows users
+    play_cmd = 'afplay' if platform.system() == 'Darwin' else 'play'
+    output = subprocess.check_output([play_cmd, "honk1.wav"])
     print(term.clear())
     print(honk)
 
