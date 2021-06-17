@@ -51,7 +51,7 @@ def _target_is_in_progress(target: Target) -> bool:
     if not (state.waiting or state.active or state.terminated):
         return False
     if target.type == "server":
-        return not state.waiting or (state.active and not state.active.ready)
+        return not state.active or not state.active.ready
     elif target.type == "job":
         return not state.terminated
     else:
